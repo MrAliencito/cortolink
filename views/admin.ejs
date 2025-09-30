@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Admin — CortoLink</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <main class="card">
+    <h1>📊 Administración</h1>
+    <p>Estás autenticado vía Basic Auth. Lista de enlaces y clics:</p>
+    <table id="tabla" style="width:100%; border-collapse:collapse;">
+      <thead><tr><th>Slug</th><th>URL</th><th>Clics</th><th>Creado</th><th>Acciones</th></tr></thead>
+      <tbody></tbody>
+    </table>
+    <section id="detalle" style="margin-top:1rem;"></section>
+  </main>
+<script>
+async function cargarLista() {
+  const res = await fetch('/api/admin/links');
+  const data = await res.json();
+  const tbody = document.querySelector('#tabla tbody');
+  tbody.innerHTML = '';
+  for (const l of data) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = \`
+      <td><a href="/\${l.slug}" target="_blank">\${l.slug}</a></td>
+      <td style="max-width:360px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">\${l.urlOriginal}</td>
+      <td>\${l.totalClicks}</td>
+      <td>\${new Date(l.creadoEn).toLocaleString()}</td>
+      <td>
+        <button onclick="ver(\${l.id})">Ver clics</button>
+        <button onclick="borrar(\${l.id})" style="background:#ef4444;color:#fff">Borrar</button>
+      </td>\`;
+    tbody.appendChild(tr);
+  }
+}
+async function ver(id) {
+  const res = await fetch('/api/admin/links/' + id + '/stats');
+  const data = await res.json();
+  const $d = document.querySelector('#detalle');
+  $d.innerHTML = '<h3>Clicks</h3>';
+  if (data.length === 0) { $d.innerHTML += '<p>Sin clics aún.</p>'; return; }
+  const ul = document.createElement('ul');
+  for (const c of data) {
+    const li = document.createElement('li');
+    li.textContent = new Date(c.ts).toLocaleString() + ' — ' + (c.referer || 'sin referer') + ' — ' + (c.ip || 'ip n/d');
+    ul.appendChild(li);
+  }
+  $d.appendChild(ul);
+}
+async function borrar(id) {
+  if (!confirm('¿Eliminar este enlace?')) return;
+  await fetch('/api/admin/links/' + id, { method: 'DELETE' });
+  await cargarLista();
+  document.querySelector('#detalle').innerHTML = '';
+}
+cargarLista();
+</script>
+</body>
+</html>

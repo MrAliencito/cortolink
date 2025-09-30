@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CortoLink — crea tus enlaces cortos</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <main class="card">
+    <h1>🔗 CortoLink</h1>
+    <p>Acorta tus links y comparte una URL corta. Este demo guarda estadísticas de clics.</p>
+
+    <form id="form">
+      <label>URL original</label>
+      <input id="url" type="url" placeholder="https://ejemplo.com" required>
+      <label>Slug (opcional)</label>
+      <input id="slug" type="text" placeholder="mi-link">
+      <button class="primario" type="submit">Crear enlace corto</button>
+    </form>
+
+    <div id="resultado" class="resultado" hidden></div>
+  </main>
+
+  <footer>Node + Express + Prisma (SQLite). <a href="/admin" target="_blank">Abrir admin</a></footer>
+
+  <script>
+    const $f = document.querySelector('#form');
+    const $url = document.querySelector('#url');
+    const $slug = document.querySelector('#slug');
+    const $res = document.querySelector('#resultado');
+    $f.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const body = { urlOriginal: $url.value.trim() };
+      if ($slug.value.trim()) body.slug = $slug.value.trim();
+      const resp = await fetch('/api/links', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      const data = await resp.json();
+      if (resp.ok) {
+        $res.hidden = false;
+        $res.innerHTML = `Enlace: <a href="${data.shortUrl}" target="_blank">${data.shortUrl}</a>`;
+        $f.reset();
+      } else {
+        $res.hidden = false;
+        $res.textContent = 'Error: ' + (data.error || 'Solicitud inválida');
+      }
+    });
+  </script>
+</body>
+</html>
